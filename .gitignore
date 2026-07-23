@@ -1,0 +1,16 @@
+# Dependencies
+**/node_modules/
+
+# Environment secrets (keep safe templates)
+**/.env
+**/.env.*
+!**/.env.example
+
+# Generated frontend output
+**/build/
+**/build-temp/
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db

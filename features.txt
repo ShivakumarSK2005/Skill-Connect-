@@ -1,0 +1,76 @@
+✍️ 1. FEATURES
+
+👤 Customer can:
+1.Sign up / Login
+2.View service
+3.Book a service
+4.Edit -- not doing now due to complexity may include afterwards
+5.Cancel Bookings
+6.Give rating
+7.View & Edit Profile
+
+🧑‍🔧 Provider can:
+1.Sign up / Login
+2.Add services
+3.View bookings
+4.Confirm/Reject Bookings
+5.Edit Services
+6.View Ratings
+7.View & Edit Profile
+
+🛠️ Admin (optional for now):
+1.Manage users/services
+
+2. Core Entities
+a.User
+b.Service
+c.Booking
+d.Review
+e.Category
+
+3. Draw Basic Flow
+User → Login → Browse Services → Book 
+User → Login → View Profile → Edit Profile
+User → Login → View Booked Services → View Status
+User → Loging → Edit Booked Services 
+User → Notifies if Privder Confirms / Reject Bookings 
+Provider → Login → View Profile → View Ratings
+Provider → Login → View Profile → View Reviews
+Provider → Login → View Profile → Edit Profile
+Provider → Login → View Services → Edit Service
+Provider → Login → View Bookings → View Details
+Provider → Login → View Bookings → Edit Booking
+Provider → Login → Confirm/Reject Edited Bookings 
+User → Login → View Completed Services → Rate Provider
+Provider → Login → Add Service
+Provider → Login → View Bookings → Confirm/Reject
+User → Login → Booked Services → Cancel Service
+Admin → Login → Manage Users/Serices
+
+Modified Version of above flows short and Best For Interviews
+👤 Customer Flow
+Signup/Login → Browse Services → View Details → Book Service → 
+Wait for Provider Confirmation → Service Completed → Give Review
+
+🧑‍🔧 Provider Flow
+Signup/Login → Add Service → Receive Booking → 
+Accept/Reject → Complete Service → View Reviews
+
+🛠️ Admin Flow
+Login → View Users → View Services
+
+4. Tech Stack
+- Frontend: React 
+- Backend: Node.js + Express
+- Database: MYSQL
+- ORM: Sequelize (optional but good)
+- API: REST
+- Testing: Jest (optional for now)
+- Deployment: Docker (Later Stage)
+- Authorization: Role-based
+- Authentication: JWT
+
+Summery:
+“I defined three roles (customer, provider, admin), 
+identified core entities (user, service, booking, review), 
+and designed user flows before implementing APIs.”
