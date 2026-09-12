@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../Services/api";
 import { decodeToken, getHomeRoute } from "../Services/auth";
+import logoImg from "../skill-connect-logo.jpg";
 
 function Login() {
   const navigate = useNavigate();
@@ -57,6 +58,10 @@ function Login() {
   return (
     <div className="auth-shell">
       <section className="auth-hero">
+        <div className="auth-brand-badge">
+          <img src={logoImg} alt="Skill Connect" className="auth-brand-logo" />
+          <span>Skill Connect</span>
+        </div>
         <span className="chip">Service marketplace</span>
         <h1>Book reliable professionals in minutes.</h1>
         <p>

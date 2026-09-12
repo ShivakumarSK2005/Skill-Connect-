@@ -65,6 +65,7 @@ function ProviderBookings() {
 
   useEffect(() => {
     fetchBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const bookingStats = useMemo(() => {

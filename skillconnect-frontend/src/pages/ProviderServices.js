@@ -117,6 +117,7 @@ function ProviderServices() {
       const payload = {
         category_id: selectedCategoryId,
         service_name: trimmedServiceName,
+        title: trimmedServiceName,
         description: form.description,
         price: priceValue
       };

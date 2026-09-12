@@ -1,0 +1,12 @@
+You can explain it like this:
+Skill Connect is a full-stack service marketplace application. It connects customers with service providers, while a separate admin portal manages users, services, bookings, and platform activity.
+The system follows a client-server architecture. I built two React frontends: one for customers and providers, and another dedicated admin dashboard. Both frontends communicate with REST APIs using Axios.
+On the backend, I used Node.js and Express. The main backend handles authentication, service listings, booking management, reviews, and provider-related operations. The admin backend is separated so that administrative functions are isolated from normal user functionality.
+Authentication is implemented using JWT tokens. After login, middleware verifies the token and checks the user role—customer, provider, or admin—before allowing access to protected routes. This gives role-based access control.
+The backend is organized using a layered structure: routes define API endpoints, controllers contain business logic, middleware handles authentication and authorization, and the database configuration handles MySQL connectivity.
+MySQL is used as the relational database for storing users, services, bookings, reviews, and admin information. Both backend services access the same database, but expose different APIs based on the user role and responsibility.
+The main React frontend runs on port 3000 and connects to the main Express API on port 5000. The admin frontend runs separately and connects to the admin API on port 5001. CORS is configured to allow these frontend-backend communications.
+This separation makes the project easier to maintain, more secure, and scalable because user-facing features and admin features can evolve independently.
+
+A shorter version:
+Skill Connect uses React for the user and admin interfaces, Node.js and Express for REST APIs, JWT for role-based authentication, and MySQL for persistent data. It separates customer/provider workflows from admin operations through dedicated frontends and backend APIs.

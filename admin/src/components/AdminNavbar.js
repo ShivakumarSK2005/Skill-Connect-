@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { clearSession } from "../services/auth";
+import logoImg from "../skill-connect-logo.jpg";
 
 function AdminNavbar() {
   const navigate = useNavigate();
@@ -12,8 +13,13 @@ function AdminNavbar() {
   return (
     <header className="app-navbar">
       <div className="nav-brand-wrap">
-        <button className="brand-mark" type="button" onClick={() => navigate("/dashboard")}>
-          SC
+        <button
+          className="brand-mark"
+          type="button"
+          onClick={() => navigate("/dashboard")}
+          title="Skill Connect"
+        >
+          <img src={logoImg} alt="Skill Connect" className="brand-logo-img" />
         </button>
         <div>
           <p className="nav-eyebrow">Skill Connect</p>

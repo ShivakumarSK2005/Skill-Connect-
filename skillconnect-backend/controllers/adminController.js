@@ -103,7 +103,7 @@ exports.getManagedServices = (_req, res) => {
   const sql = `
     SELECT
       s.id,
-      COALESCE(NULLIF(st.name, ''), c.name, 'Service') AS service_name,
+      COALESCE(NULLIF(s.title, ''), c.name, 'Service') AS service_name,
       COALESCE(c.name, 'General') AS category_name,
       u.name AS provider_name,
       u.phone,
@@ -111,9 +111,8 @@ exports.getManagedServices = (_req, res) => {
       s.description,
       s.created_at
     FROM services s
-    LEFT JOIN service_types st ON s.service_type_id = st.id
-    LEFT JOIN categories c ON c.id = COALESCE(st.category_id, s.category_id)
-    LEFT JOIN users u ON s.provider_id = u.id
+    LEFT JOIN categories c ON c.id = s.category_id
+    JOIN users u ON s.provider_id = u.id
     WHERE s.is_active = 1
     ORDER BY s.id DESC
   `;
@@ -142,48 +141,43 @@ exports.getAdminBookings = (req, res) => {
   const params = [];
 
   if (filter === "today") {
-    conditions.push("DATE(b.booking_date) = CURDATE()");
+    conditions.push("DATE(booking_date) = CURDATE()");
   } else if (filter === "week") {
-    conditions.push("DATE(b.booking_date) >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)");
-    conditions.push("DATE(b.booking_date) <= DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 6 DAY)");
+    conditions.push("DATE(booking_date) >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)");
+    conditions.push("DATE(booking_date) <= DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 6 DAY)");
   } else if (filter === "month") {
-    conditions.push("YEAR(b.booking_date) = YEAR(CURDATE())");
-    conditions.push("MONTH(b.booking_date) = MONTH(CURDATE())");
+    conditions.push("YEAR(booking_date) = YEAR(CURDATE())");
+    conditions.push("MONTH(booking_date) = MONTH(CURDATE())");
   } else if (filter === "year") {
-    conditions.push("YEAR(b.booking_date) = YEAR(CURDATE())");
+    conditions.push("YEAR(booking_date) = YEAR(CURDATE())");
   }
 
   if (start_date) {
-    conditions.push("DATE(b.booking_date) >= ?");
+    conditions.push("DATE(booking_date) >= ?");
     params.push(start_date);
   }
 
   if (end_date) {
-    conditions.push("DATE(b.booking_date) <= ?");
+    conditions.push("DATE(booking_date) <= ?");
     params.push(end_date);
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const sql = `
     SELECT
-      b.id AS booking_id,
-      b.booking_date,
-      b.status,
-      b.created_at,
-      COALESCE(NULLIF(st.name, ''), c.name, 'Service') AS service_name,
-      COALESCE(c.name, 'General') AS category,
-      cu.name AS customer_name,
-      cu.phone AS customer_phone,
-      pu.name AS provider_name,
-      pu.phone AS provider_phone
-    FROM bookings b
-    JOIN services s ON b.service_id = s.id
-    LEFT JOIN service_types st ON s.service_type_id = st.id
-    LEFT JOIN categories c ON c.id = COALESCE(st.category_id, s.category_id)
-    LEFT JOIN users cu ON b.user_id = cu.id
-    LEFT JOIN users pu ON s.provider_id = pu.id
+      booking_id,
+      booking_date,
+      status,
+      created_at,
+      service_name,
+      category,
+      customer_name,
+      customer_phone,
+      provider_name,
+      provider_phone
+    FROM booking_details
     ${whereClause}
-    ORDER BY b.booking_date DESC, b.id DESC
+    ORDER BY booking_date DESC, booking_id DESC
   `;
 
   db.query(sql, params, (err, results) => {

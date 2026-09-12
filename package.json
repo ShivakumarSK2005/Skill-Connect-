@@ -1,0 +1,15 @@
+{
+  "name": "skill-connect",
+  "version": "1.0.0",
+  "description": "Skill Connect fullstack application",
+  "scripts": {
+    "start": "node start-all.js",
+    "dev": "node start-all.js",
+    "backend": "npm start --prefix skillconnect-backend",
+    "frontend": "npm start --prefix skillconnect-frontend",
+    "admin": "npm start --prefix admin"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

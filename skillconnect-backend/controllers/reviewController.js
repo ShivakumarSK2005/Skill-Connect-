@@ -113,25 +113,8 @@ exports.addReview = (req, res) => {
             return res.status(500).json({ error: insertErr.message });
           }
 
-          const updateRating = `
-            UPDATE services
-            SET
-              avg_rating = (
-                SELECT AVG(rating) FROM reviews WHERE service_id = ?
-              ),
-              total_reviews = (
-                SELECT COUNT(*) FROM reviews WHERE service_id = ?
-              )
-            WHERE id = ?
-          `;
-
-          db.query(updateRating, [service_id, service_id, service_id], (ratingErr) => {
-            if (ratingErr) {
-              return res.status(500).json({ error: ratingErr.message });
-            }
-
-            res.json({ message: "Review added successfully" });
-          });
+          // Trigger 'after_review_insert' automatically updates avg_rating and total_reviews
+          res.json({ message: "Review added successfully" });
         }
       );
     });

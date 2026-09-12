@@ -1,0 +1,343 @@
+-- =============================================================================
+-- DATABASE: SKILL_CONNECT
+-- Description: Master Database Schema, Indexes, Trigger, View, and Procedures
+-- =============================================================================
+
+CREATE DATABASE IF NOT EXISTS SKILL_CONNECT;
+USE SKILL_CONNECT;
+
+
+-- =============================================================================
+-- 1. TABLES DEFINITION (In order of Foreign Key dependencies)
+-- =============================================================================
+
+-- -----------------------------------------------------
+-- Table: users
+-- Stores customers, providers, and admins
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+
+  name VARCHAR(100) NOT NULL,
+
+  -- Validates standard @gmail.com addresses
+  email VARCHAR(100) UNIQUE NOT NULL
+    CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@gmail\\.com$'),
+
+  password VARCHAR(255) NOT NULL,
+
+  -- Three distinct user roles
+  role ENUM('customer', 'provider', 'admin') NOT NULL,
+
+  -- Validates 10-digit Indian mobile numbers starting with 6-9
+  phone VARCHAR(10) UNIQUE NOT NULL
+    CHECK (phone REGEXP '^[6-9][0-9]{9}$'),
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- -----------------------------------------------------
+-- Table: categories
+-- Service classifications (e.g., Plumbing, Electrical, Cleaning)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS categories (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(50) UNIQUE NOT NULL
+);
+
+
+-- -----------------------------------------------------
+-- Table: services
+-- Individual offerings created by providers under a category
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS services (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+
+  provider_id INT NOT NULL,
+  category_id INT,
+
+  title VARCHAR(100) NOT NULL,
+  description TEXT,
+  price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
+
+  -- Automatically maintained by the 'after_review_insert' trigger
+  avg_rating DECIMAL(2,1) DEFAULT 0.0 CHECK (avg_rating BETWEEN 0 AND 5),
+  total_reviews INT DEFAULT 0,
+
+  is_active TINYINT DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  -- Foreign Key: If provider is deleted, delete all their services
+  CONSTRAINT fk_service_provider
+    FOREIGN KEY (provider_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+
+  -- Foreign Key: If category is deleted, keep service but set category to NULL
+  CONSTRAINT fk_service_category
+    FOREIGN KEY (category_id)
+    REFERENCES categories(id)
+    ON DELETE SET NULL
+);
+
+
+-- -----------------------------------------------------
+-- Table: bookings
+-- Tracks appointments between customers and providers
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS bookings (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+
+  user_id INT NOT NULL,
+  service_id INT NOT NULL,
+
+  booking_date DATETIME NOT NULL,
+
+  -- Full 7-stage lifecycle status
+  status ENUM(
+    'pending',
+    'confirmed',
+    'pending_start',
+    'started',
+    'completed',
+    'cancelled',
+    'expired'
+  ) DEFAULT 'pending',
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  -- Foreign Key: If customer is deleted, remove their bookings
+  CONSTRAINT fk_booking_customer
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+
+  -- Foreign Key: If service is deleted, remove linked bookings
+  CONSTRAINT fk_booking_service
+    FOREIGN KEY (service_id)
+    REFERENCES services(id)
+    ON DELETE CASCADE
+);
+
+
+-- -----------------------------------------------------
+-- Table: reviews
+-- Customer feedback on completed bookings
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS reviews (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+
+  user_id INT NOT NULL,
+  service_id INT NOT NULL,
+  booking_id INT NOT NULL,
+
+  rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  -- Foreign Keys
+  CONSTRAINT fk_review_user
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_review_service
+    FOREIGN KEY (service_id)
+    REFERENCES services(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_review_booking
+    FOREIGN KEY (booking_id)
+    REFERENCES bookings(id)
+    ON DELETE CASCADE,
+
+  -- Ensures one review per booking (allows repeat customers to review new bookings)
+  CONSTRAINT uq_review_booking
+    UNIQUE (booking_id)
+);
+
+
+-- =============================================================================
+-- 2. INDEXES (Performance Optimization for Foreign Keys & Lookups)
+-- =============================================================================
+
+CREATE INDEX idx_services_category ON services(category_id);
+CREATE INDEX idx_services_provider ON services(provider_id);
+CREATE INDEX idx_bookings_user ON bookings(user_id);
+CREATE INDEX idx_bookings_service ON bookings(service_id);
+CREATE INDEX idx_bookings_date_status ON bookings(booking_date, status);
+
+
+-- =============================================================================
+-- 3. SEED DATA (Default System Categories)
+-- =============================================================================
+
+INSERT IGNORE INTO categories (name) VALUES
+('Plumbing'),
+('Electrical'),
+('Cleaning');
+
+
+-- =============================================================================
+-- 4. TRIGGER: Automated Rating Calculation
+-- Automatically recalculates avg_rating and total_reviews on services
+-- =============================================================================
+
+DROP TRIGGER IF EXISTS after_review_insert;
+
+DELIMITER //
+
+CREATE TRIGGER after_review_insert
+AFTER INSERT ON reviews
+FOR EACH ROW
+BEGIN
+    UPDATE services
+    SET
+        avg_rating = (
+            SELECT COALESCE(ROUND(AVG(rating), 1), 0)
+            FROM reviews
+            WHERE service_id = NEW.service_id
+        ),
+        total_reviews = (
+            SELECT COUNT(*)
+            FROM reviews
+            WHERE service_id = NEW.service_id
+        )
+    WHERE id = NEW.service_id;
+END //
+
+DELIMITER ;
+
+
+-- =============================================================================
+-- 5. VIEW: Unified Booking Details
+-- Combines Bookings, Customer, Provider, Service & Category
+-- =============================================================================
+
+DROP VIEW IF EXISTS booking_details;
+
+CREATE VIEW booking_details AS
+SELECT
+    b.id AS booking_id,
+    b.service_id,
+    b.booking_date,
+    b.status,
+    b.created_at,
+
+    -- Customer Info
+    b.user_id AS customer_id,
+    cu.name AS customer_name,
+    cu.phone AS customer_phone,
+
+    -- Provider Info
+    s.provider_id,
+    pu.name AS provider_name,
+    pu.phone AS provider_phone,
+
+    -- Service Info (Aliased to match frontend expectations)
+    s.title AS service_name,
+    COALESCE(c.name, 'General') AS category,
+    s.price
+
+FROM bookings b
+JOIN services s ON b.service_id = s.id
+LEFT JOIN categories c ON s.category_id = c.id
+JOIN users cu ON b.user_id = cu.id
+JOIN users pu ON s.provider_id = pu.id;
+
+
+-- =============================================================================
+-- 6. STORED PROCEDURES
+-- =============================================================================
+
+-- -----------------------------------------------------
+-- Procedure A: GetProviderServices
+-- Fetches all services belonging to a provider formatted for frontend UI
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS GetProviderServices;
+
+DELIMITER //
+
+CREATE PROCEDURE GetProviderServices(IN p_provider_id INT)
+BEGIN
+    SELECT
+        s.id,
+        s.category_id,
+        s.title AS service_name,
+        COALESCE(c.name, 'General') AS category,
+        s.description,
+        s.price,
+        COALESCE(s.avg_rating, 0) AS avg_rating,
+        COALESCE(s.total_reviews, 0) AS total_reviews,
+        s.created_at
+    FROM services s
+    LEFT JOIN categories c ON c.id = s.category_id
+    WHERE s.provider_id = p_provider_id
+    ORDER BY s.id DESC;
+END //
+
+DELIMITER ;
+
+
+-- -----------------------------------------------------
+-- Procedure B: sp_expire_stale_bookings
+-- Marks unstarted bookings older than 1 hour as 'expired'
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS sp_expire_stale_bookings;
+
+DELIMITER //
+
+CREATE PROCEDURE sp_expire_stale_bookings()
+BEGIN
+    UPDATE bookings
+    SET status = 'expired'
+    WHERE status IN ('pending', 'confirmed', 'pending_start')
+      AND booking_date < DATE_SUB(NOW(), INTERVAL 1 HOUR);
+END //
+
+DELIMITER ;
+
+
+-- =============================================================================
+-- 7. DIAGNOSTIC & VERIFICATION QUERIES
+-- =============================================================================
+
+-- 1. Verify all Tables and Views
+SHOW FULL TABLES;
+
+-- 2. Test the View (Inspect combined booking details)
+SELECT * FROM booking_details LIMIT 10;
+
+-- 3. Verify the Trigger is active
+SHOW TRIGGERS;
+
+-- 4. Verify Stored Procedures exist
+SHOW PROCEDURE STATUS WHERE Db = 'SKILL_CONNECT';
+
+-- 5. Test Stored Procedure A (e.g. provider ID = 2)
+CALL GetProviderServices(2);
+
+-- 6. Test Stored Procedure B
+CALL sp_expire_stale_bookings();
+
+-- 7. Verify the MySQL Event Scheduler engine is ON
+SHOW VARIABLES LIKE 'event_scheduler';
+
+-- 8. Verify the 15-Minute Scheduled Event is active
+SHOW EVENTS FROM SKILL_CONNECT;
+
+
+-- =============================================================================
+-- 8. EVENT MANAGEMENT COMMANDS (Optional Controls)
+-- =============================================================================
+
+-- Pause the 15-minute background event
+-- ALTER EVENT ev_expire_stale_bookings DISABLE;
+
+-- Resume the 15-minute background event
+-- ALTER EVENT ev_expire_stale_bookings ENABLE;
+
+-- Delete the 15-minute background event
+-- DROP EVENT IF EXISTS ev_expire_stale_bookings;

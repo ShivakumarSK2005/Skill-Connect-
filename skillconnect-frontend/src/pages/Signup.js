@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../Services/api";
+import logoImg from "../skill-connect-logo.jpg";
 
 const initialForm = {
   name: "",
@@ -61,6 +62,10 @@ function Signup() {
   return (
     <div className="auth-shell signup-shell">
       <section className="auth-hero compact">
+        <div className="auth-brand-badge">
+          <img src={logoImg} alt="Skill Connect" className="auth-brand-logo" />
+          <span>Skill Connect</span>
+        </div>
         <span className="chip">Join Skill Connect</span>
         <h1>Create your marketplace account.</h1>
         <p>
@@ -73,7 +78,7 @@ function Signup() {
         <div>
           <p className="section-kicker">Get started</p>
           <h2>Sign up</h2>
-          <p className="muted-text">Choose the role that matches how you’ll use the app.</p>
+          <p className="muted-text">Choose the role that matches how you will use the app.</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>

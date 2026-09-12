@@ -4,24 +4,25 @@ import Navbar from "../components/Navbar";
 import "../styles/global.css";
 
 function AddService() {
-  const [serviceTypes, setServiceTypes] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({
-    service_type_id: "",
+    category_id: "",
+    service_name: "",
     description: "",
     price: ""
   });
 
   useEffect(() => {
-    const fetchServiceTypes = async () => {
+    const fetchCategories = async () => {
       try {
-        const res = await api.get("/api/services/types");
-        setServiceTypes(Array.isArray(res.data) ? res.data : []);
+        const res = await api.get("/api/services/categories");
+        setCategories(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
-        console.error("Error fetching service types:", err);
+        console.error("Error fetching categories:", err);
       }
     };
 
-    fetchServiceTypes();
+    fetchCategories();
   }, []);
 
   const handleChange = (event) => {
@@ -33,14 +34,16 @@ function AddService() {
   };
 
   const handleSubmit = async () => {
-    if (!form.service_type_id || !form.price) {
-      alert("Please select a service type and enter a price");
+    if (!form.category_id || !form.service_name.trim() || !form.price) {
+      alert("Please select a category, enter a service name, and enter a price");
       return;
     }
 
     try {
       await api.post("/api/services", {
-        service_type_id: Number(form.service_type_id),
+        category_id: Number(form.category_id),
+        service_name: form.service_name.trim(),
+        title: form.service_name.trim(),
         description: form.description,
         price: Number(form.price)
       });
@@ -60,19 +63,30 @@ function AddService() {
         <h2>Add Service</h2>
 
         <div className="form-group">
-          <label>Service Type</label>
+          <label>Category</label>
           <select
-            name="service_type_id"
-            value={form.service_type_id}
+            name="category_id"
+            value={form.category_id}
             onChange={handleChange}
           >
-            <option value="">Select service type</option>
-            {serviceTypes.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name} - {type.category}
+            <option value="">Select category</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="form-group">
+          <label>Service Name</label>
+          <input
+            type="text"
+            name="service_name"
+            value={form.service_name}
+            onChange={handleChange}
+            placeholder="e.g. Pipe Repair, Tap Installation"
+          />
         </div>
 
         <div className="form-group">

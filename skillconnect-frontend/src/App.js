@@ -14,6 +14,7 @@ import Bookings from "./pages/Bookings";
 import ProviderDashboard from "./pages/ProviderDashboard";
 import ProviderBookings from "./pages/ProviderBookings";
 import ProviderServices from "./pages/ProviderServices";
+import ProviderEarnings from "./pages/ProviderEarnings";
 import Profile from "./pages/Profile";
 
 function HomeRedirect() {
@@ -110,6 +111,14 @@ function App() {
           element={
             <ProtectedRoute allowedRole="provider">
               <ProviderServices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/provider-earnings"
+          element={
+            <ProtectedRoute allowedRole="provider">
+              <ProviderEarnings />
             </ProtectedRoute>
           }
         />

@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { clearSession, getCurrentUser } from "../Services/auth";
+import logoImg from "../skill-connect-logo.jpg";
 
 function Navbar() {
   const location = useLocation();
@@ -22,6 +23,7 @@ function Navbar() {
     { label: "Dashboard", path: "/provider-dashboard" },
     { label: "Bookings", path: "/provider-bookings" },
     { label: "Services", path: "/provider-services" },
+    { label: "Earnings", path: "/provider-earnings" },
     { label: "Profile", path: "/profile" }
   ];
   const adminLinks = [
@@ -47,8 +49,9 @@ function Navbar() {
                 ? "/admin-dashboard"
                 : "/services"
           }
+          title="Skill Connect"
         >
-          SC
+          <img src={logoImg} alt="Skill Connect" className="brand-logo-img" />
         </Link>
         <div>
           <p className="nav-eyebrow">Skill Connect</p>

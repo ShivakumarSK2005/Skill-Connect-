@@ -7,6 +7,7 @@ const {
   updateBookingStatus,
   getCustomerBookings,
   getProviderBookings,
+  getProviderEarnings,
   markAsCompleted,
   requestStart,
   confirmStart,
@@ -22,8 +23,9 @@ router.put("/:id/status", verifyToken, authorizeRoles("provider"), updateBooking
 // 👤 Customer bookings
 router.get("/my", verifyToken, authorizeRoles("customer"), getCustomerBookings);
 
-// 🧑‍🔧 Provider bookings
+// 🧑‍🔧 Provider bookings & earnings
 router.get("/provider", verifyToken, authorizeRoles("provider"), getProviderBookings);
+router.get("/provider/earnings", verifyToken, authorizeRoles("provider"), getProviderEarnings);
 
 // 🔹 Provider to mark Services As Complete
 router.put("/:id/complete", verifyToken, authorizeRoles("provider"), markAsCompleted);
