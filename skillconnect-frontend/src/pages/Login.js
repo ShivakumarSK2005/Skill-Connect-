@@ -138,14 +138,6 @@ function Login() {
           <button className="btn btn-primary wide" type="submit" disabled={isDisabled}>
             {loading ? "Signing in..." : "Login"}
           </button>
-
-          <button
-            className="btn btn-secondary wide"
-            type="button"
-            onClick={() => navigate("/admin-login")}
-          >
-            Admin Login
-          </button>
         </form>
 
         <p className="muted-text">
