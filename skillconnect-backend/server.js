@@ -32,12 +32,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// API Route Modules
+// API Route Modules (mount on both /api/* and /* to prevent 404 mismatches)
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
+
 app.use("/api/services", serviceRoutes);
+app.use("/services", serviceRoutes);
+
 app.use("/api/bookings", bookingRoutes);
+app.use("/bookings", bookingRoutes);
+
 app.use("/api/reviews", reviewRoutes);
+app.use("/reviews", reviewRoutes);
+
 app.use("/api/admin", adminRoutes);
+app.use("/admin", adminRoutes);
 
 // Health Check & Role Verification Test Endpoints
 app.get("/protected", verifyToken, (req, res) => {

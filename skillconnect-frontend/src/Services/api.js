@@ -17,8 +17,17 @@ import { clearSession, getToken } from "./auth";
  *   3. Response Interceptor: Checks if status is 401. If so, calls `clearSession()` and redirects to `/`.
  *   4. Exports configured `api` instance.
  */
+const getBaseURL = () => {
+  const envUrl = process.env.REACT_APP_API_URL;
+  if (!envUrl || !envUrl.trim()) {
+    return "http://localhost:5000/api";
+  }
+  const clean = envUrl.trim().replace(/\/+$/, "");
+  return clean.endsWith("/api") ? clean : `${clean}/api`;
+};
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api"
+  baseURL: getBaseURL()
 });
 
 // Request Interceptor: Attach JWT Token
