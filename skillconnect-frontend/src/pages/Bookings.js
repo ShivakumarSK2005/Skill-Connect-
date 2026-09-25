@@ -5,6 +5,16 @@ import Navbar from "../components/Navbar";
 import StatusBadge from "../components/StatusBadge";
 import api from "../Services/api";
 
+/**
+ * WHAT IT DOES:
+ *   Calculates whether the 1-hour start window has elapsed since scheduled booking time.
+ * 
+ * WHY WE ADDED IT:
+ *   - Visual feedback: Informs the customer if the booking has lapsed before work started.
+ * 
+ * @param {Object} booking - Booking data item
+ * @returns {boolean} True if > 1 hour past scheduled time
+ */
 const isStartWindowExpired = (booking) => {
   if (!["confirmed", "pending_start"].includes(booking.status)) {
     return false;
@@ -16,6 +26,23 @@ const isStartWindowExpired = (booking) => {
   return Number.isFinite(bookingTime) && Date.now() - bookingTime > oneHour;
 };
 
+/**
+ * WHAT IT DOES:
+ *   Customer bookings dashboard. Displays current, active, completed, and cancelled bookings.
+ *   Enables customers to confirm provider arrival ("Confirm Start"), cancel pending requests,
+ *   and submit 5-star ratings and reviews once jobs are completed.
+ * 
+ * WHY WE ADDED IT:
+ *   - Booking Lifecycle Tracking: Keeps customers informed on appointment status and provider contact info.
+ *   - Trust & Quality Feedback: Provides an inline star rating and comment form immediately upon job completion.
+ * 
+ * HOW IT WORKS:
+ *   1. Fetches `/bookings/my` and `/reviews/my` simultaneously via `Promise.all()`.
+ *   2. Merges review status into bookings so completed jobs can show "Review Submitted" or the rating form.
+ *   3. `handleConfirmStart(bookingId)` calls `api.put('/bookings/:id/confirm-start')`.
+ *   4. `handleCancelBooking(bookingId)` calls `api.put('/bookings/:id/cancel')`.
+ *   5. `handleReviewSubmit(booking)` calls `api.post('/reviews', { booking_id, rating, comment })`.
+ */
 function Bookings() {
   const [bookings, setBookings] = useState([]);
   const [filter, setFilter] = useState("all");

@@ -5,6 +5,26 @@ import Navbar from "../components/Navbar";
 import api from "../Services/api";
 import "../styles/global.css";
 
+/**
+ * WHAT IT DOES:
+ *   Financial and earnings analytics portal for service providers.
+ *   Provides high-level KPI cards (Total Revenue, Completed Jobs, Avg Ticket Size),
+ *   interactive time-period filter pills (This Week, This Month, Last Month, Individual Years, All Time),
+ *   an adaptive revenue trend bar chart with SVG/CSS dynamic bars, top revenue-generating skills,
+ *   and an itemized transaction ledger.
+ * 
+ * WHY WE ADDED IT:
+ *   - Financial Visibility: Enables professionals to track their income, spot seasonal trends,
+ *     and evaluate which services yield the highest returns.
+ *   - Dynamic Scale Adaptation: Automatically adjusts chart resolution (days for week, weeks for month,
+ *     months for year, years for all-time) and left-aligns bars when fewer than 6 data points exist.
+ * 
+ * HOW IT WORKS:
+ *   1. `fetchEarnings()` requests `/api/bookings/provider/earnings` passing `period` and `selectedYear`.
+ *   2. `availableYears` generates year selection buttons dynamically starting from provider's registration year.
+ *   3. `chartConfig` processes raw transactions into chart bars with proportional percentage heights.
+ *   4. Displays top services ranked by revenue share and a detailed audit log of completed transactions.
+ */
 function ProviderEarnings() {
   const [data, setData] = useState({
     summary: {
@@ -47,6 +67,7 @@ function ProviderEarnings() {
 
   useEffect(() => {
     fetchEarnings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period, selectedYear]);
 
   const availableYears = useMemo(() => {

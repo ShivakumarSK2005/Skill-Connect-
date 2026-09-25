@@ -3,6 +3,20 @@ import api from "../Services/api";
 import Navbar from "../components/Navbar";
 import "../styles/global.css";
 
+/**
+ * WHAT IT DOES:
+ *   Service creation form for providers. Fetches platform categories, collects service title,
+ *   description, and pricing, and submits the new listing to `/api/services`.
+ * 
+ * WHY WE ADDED IT:
+ *   - Provider Skill Listing: Allows providers to publish new offerings under recognized categories.
+ * 
+ * HOW IT WORKS:
+ *   1. `useEffect` loads categories from `/api/services/categories`.
+ *   2. Form state binds inputs for `category_id`, `service_name`, `description`, and `price`.
+ *   3. `handleSubmit` validates fields and dispatches POST request.
+ *   4. Redirects to `/provider-dashboard` upon creation.
+ */
 function AddService() {
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({

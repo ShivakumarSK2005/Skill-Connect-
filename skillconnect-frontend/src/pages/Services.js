@@ -4,6 +4,24 @@ import LoadingState from "../components/LoadingState";
 import Navbar from "../components/Navbar";
 import api from "../Services/api";
 
+/**
+ * WHAT IT DOES:
+ *   Customer marketplace catalog page. Displays available services offered by all providers,
+ *   supports multi-attribute search and category filters, renders service details modals with reviews,
+ *   and allows customers to pick a date/time slot to book a provider.
+ * 
+ * WHY WE ADDED IT:
+ *   - Core Discovery Engine: Where customers find local plumbers, electricians, cleaners, and other pros.
+ *   - Client-side Filtering: Real-time search by service title, provider name, and description,
+ *     along with category and minimum rating filters.
+ * 
+ * HOW IT WORKS:
+ *   1. Fetches all active services on mount via `api.get('/services')`.
+ *   2. Derives dynamic categories from services list using `useMemo`.
+ *   3. `filteredServices` computes the subset of services matching user search and dropdown selections.
+ *   4. `handleBook(serviceId)` validates selected future datetime and calls `api.post('/bookings')`.
+ *   5. `openServiceDetails(service)` fetches that service's reviews from `/reviews/service/:id` and opens a modal.
+ */
 function Services() {
   const [services, setServices] = useState([]);
   const [bookingDates, setBookingDates] = useState({});
@@ -217,7 +235,7 @@ function Services() {
                   </div>
 
                   <h3>{service.service_name}</h3>
-                  <p className="provider-line">{service.provider_name} • {service.phone || "Phone unavailable"}</p>
+                  <p className="provider-line">{service.provider_name} ï¿½ {service.phone || "Phone unavailable"}</p>
                   <p className="card-description">
                     {service.description || "Professional service with flexible booking."}
                   </p>
@@ -267,7 +285,7 @@ function Services() {
                 <p className="section-kicker">Service details</p>
                 <h3>{selectedService.service_name}</h3>
                 <p className="muted-text">
-                  {selectedService.provider_name} • {selectedService.category}
+                  {selectedService.provider_name} ï¿½ {selectedService.category}
                 </p>
               </div>
               <button className="btn btn-secondary" onClick={closeServiceDetails} type="button">

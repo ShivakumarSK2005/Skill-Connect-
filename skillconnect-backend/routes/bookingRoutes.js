@@ -1,3 +1,12 @@
+/**
+ * WHAT IT DOES:
+ *   Declares RESTful routing endpoints for the booking workflow, attaching authentication
+ *   (`verifyToken`) and role authorization (`authorizeRoles`) middlewares to each route.
+ * 
+ * WHY WE ADDED IT:
+ *   - Enforces clear role boundaries: Only customers can book, confirm start, or cancel;
+ *     only providers can accept/reject, request start, mark complete, and view earnings.
+ */
 const express = require("express");
 const router = express.Router();
 const { verifyToken } = require("../middleware/authMiddleware");

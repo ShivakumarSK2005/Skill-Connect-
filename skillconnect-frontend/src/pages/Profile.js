@@ -4,6 +4,22 @@ import Navbar from "../components/Navbar";
 import api from "../Services/api";
 import { getCurrentUser } from "../Services/auth";
 
+/**
+ * WHAT IT DOES:
+ *   Manages the user account profile view. Fetches user details (name, email, phone, role)
+ *   from `/auth/profile`, provides an inline edit mode for contact details, and submits updates.
+ * 
+ * WHY WE ADDED IT:
+ *   - Self-Service Account Management: Enables customers, providers, and admins to review their account
+ *     status and update their phone number or display name.
+ *   - Security: Keeps email and role immutable in the edit form so users cannot forge identities or roles.
+ * 
+ * HOW IT WORKS:
+ *   1. `useEffect` triggers `api.get('/auth/profile')` to populate initial state.
+ *   2. `isEditing` toggles between read-only card view and active form inputs.
+ *   3. Submitting dispatches `api.put('/auth/profile', { name, phone })`.
+ *   4. Displays real-time success or error banners.
+ */
 function Profile() {
   const user = getCurrentUser();
   const [form, setForm] = useState({

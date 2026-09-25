@@ -11,6 +11,21 @@ const initialForm = {
   role: "customer"
 };
 
+/**
+ * WHAT IT DOES:
+ *   Registration page allowing new users to sign up as either a "Customer" or a "Service Provider".
+ * 
+ * WHY WE ADDED IT:
+ *   - Onboarding: Collects contact information, password, and designated marketplace role.
+ *   - Pre-validation: Enforces password length restrictions (>= 6 characters) and required fields
+ *     before dispatching the network request.
+ * 
+ * HOW IT WORKS:
+ *   1. Maintains form fields in state defaulting `role = "customer"`.
+ *   2. `isDisabled` dynamically prevents submission if required fields are missing.
+ *   3. On submit, validates password length and dispatches POST to `/api/auth/signup`.
+ *   4. On success, displays a confirmation alert and navigates to the login screen after 900ms.
+ */
 function Signup() {
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);

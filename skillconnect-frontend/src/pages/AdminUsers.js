@@ -2,6 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import api from "../Services/api";
 
+/**
+ * WHAT IT DOES:
+ *   User moderation panel for administrators. Lists all registered customers and providers,
+ *   allows filtering by role, and allows deleting problematic or fraudulent accounts.
+ * 
+ * WHY WE ADDED IT:
+ *   - Platform Safety: Enables moderators to enforce community standards and eliminate spam accounts.
+ * 
+ * HOW IT WORKS:
+ *   1. `fetchUsers()` calls `api.get('/admin/users')`.
+ *   2. `filteredUsers` filters by role pill ('all', 'customer', 'provider').
+ *   3. `handleDelete(userId)` confirms and dispatches `api.delete('/admin/users/:id')`.
+ */
 function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("all");

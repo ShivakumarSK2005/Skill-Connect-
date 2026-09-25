@@ -1,5 +1,24 @@
 const db = require("../config/db");
 
+/**
+ * WHAT IT DOES:
+ *   Creates a new service booking requested by a customer.
+ * 
+ * WHY WE ADDED IT:
+ *   - Allows customers to schedule appointments with providers for specific services.
+ *   - Validation & Conflict Protection: Ensures scheduled time is in the future and prevents
+ *     customers from creating duplicate active bookings for the same service before the previous one finishes.
+ * 
+ * HOW IT WORKS:
+ *   1. Extracts `service_id` and `booking_date` from `req.body`, and `user_id` from JWT.
+ *   2. Validates that `booking_date` is in the future.
+ *   3. Queries `bookings` to ensure there is no existing booking in 'pending', 'confirmed', or 'started' state.
+ *   4. Inserts new record into `bookings` with initial status 'pending'.
+ *   5. Returns HTTP 201 with the new `booking_id`.
+ * 
+ * @param {Object} req - Express request (body: service_id, booking_date; user: id)
+ * @param {Object} res - Express response
+ */
 exports.createBooking = (req, res) => {
   const { service_id, booking_date } = req.body;
   const user_id = req.user.id;
@@ -52,6 +71,23 @@ exports.createBooking = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Allows a provider to accept ('confirmed') or reject ('cancelled') an incoming pending booking.
+ * 
+ * WHY WE ADDED IT:
+ *   - Provider autonomy: Providers have schedule flexibility to accept jobs that fit their availability.
+ *   - Security: Verifies the booking is for a service actually owned by the calling provider.
+ * 
+ * HOW IT WORKS:
+ *   1. Reads `bookingId` from URL params and target `status` ('confirmed' | 'cancelled') from `req.body`.
+ *   2. Joins `bookings` and `services` to verify the provider owns the associated service.
+ *   3. If authorized, updates the booking status in the database.
+ *   4. Responds with success confirmation.
+ * 
+ * @param {Object} req - Express request (params: id; body: status; user: id)
+ * @param {Object} res - Express response
+ */
 exports.updateBookingStatus = (req, res) => {
   const bookingId = req.params.id;
   const { status } = req.body;
@@ -93,6 +129,26 @@ exports.updateBookingStatus = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Retrieves all bookings made by the currently logged-in customer, including service details,
+ *   category, provider contact info, and any review/rating the customer previously submitted.
+ * 
+ * WHY WE ADDED IT:
+ *   - Powers the customer's "My Bookings" page so users can track upcoming, active, and past services.
+ *   - Correlates reviews: Inline subqueries attach `user_rating` and `user_comment` directly so
+ *     the UI can distinguish between bookings waiting for a review vs already reviewed.
+ * 
+ * HOW IT WORKS:
+ *   1. Extracts `req.user.id` from the verified JWT.
+ *   2. Joins `bookings`, `services`, `categories`, and `users` (providers).
+ *   3. Uses correlated subqueries on `reviews` table to find review matching this booking or service.
+ *   4. Sorts chronologically descending (newest bookings first).
+ *   5. Returns JSON array of customer booking records.
+ * 
+ * @param {Object} req - Express request (with req.user.id)
+ * @param {Object} res - Express response
+ */
 exports.getCustomerBookings = (req, res) => {
   const user_id = req.user.id;
 
@@ -156,6 +212,25 @@ exports.getCustomerBookings = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Retrieves the list of client bookings assigned to the logged-in provider, with optional
+ *   time filtering (today, week, month, year, or custom date ranges).
+ * 
+ * WHY WE ADDED IT:
+ *   - Powers the provider's "Bookings" management dashboard and schedule view.
+ *   - Database View Integration: Queries the `booking_details` database view, abstracting away
+ *     complex multi-table joins and optimizing query performance.
+ * 
+ * HOW IT WORKS:
+ *   1. Reads provider ID from `req.user.id` and filter options (`filter`, `start_date`, `end_date`) from `req.query`.
+ *   2. Dynamically builds SQL WHERE clauses based on the requested filter (e.g. `CURDATE()`, `YEARWEEK()`).
+ *   3. Queries `booking_details` view with parameterized values to prevent SQL injection.
+ *   4. Returns matching bookings sorted by booking date descending.
+ * 
+ * @param {Object} req - Express request (user: id; query: filter, start_date, end_date)
+ * @param {Object} res - Express response
+ */
 exports.getProviderBookings = (req, res) => {
   const provider_id = req.user.id;
   const { filter = "all", start_date, end_date } = req.query;
@@ -206,6 +281,23 @@ exports.getProviderBookings = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Marks an active service booking as 'completed' once the provider finishes the job.
+ * 
+ * WHY WE ADDED IT:
+ *   - Service Lifecycle Completion: Transitioning to 'completed' finalizes the job, unlocks customer
+ *     reviews, and counts toward provider financial analytics and earnings.
+ *   - Safeguard: Only bookings that have actively 'started' can be marked as completed.
+ * 
+ * HOW IT WORKS:
+ *   1. Verifies ownership of the booking and checks current status is 'started'.
+ *   2. Updates `bookings.status = 'completed'`.
+ *   3. Returns success message.
+ * 
+ * @param {Object} req - Express request (params: id; user: id)
+ * @param {Object} res - Express response
+ */
 exports.markAsCompleted = (req, res) => {
   const bookingId = req.params.id;
   const provider_id = req.user.id;
@@ -250,6 +342,22 @@ exports.markAsCompleted = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Initiates the start workflow when the provider arrives at the customer's location.
+ * 
+ * WHY WE ADDED IT:
+ *   - Mutual Handshake Security: Prevents providers from billing or completing jobs without
+ *     the customer being physically present and consenting.
+ * 
+ * HOW IT WORKS:
+ *   1. Verifies booking status is currently 'confirmed'.
+ *   2. Updates status to 'pending_start'.
+ *   3. Alerts/notifies the customer that the provider has arrived and is requesting to begin.
+ * 
+ * @param {Object} req - Express request (params: id; user: id)
+ * @param {Object} res - Express response
+ */
 exports.requestStart = (req, res) => {
   const bookingId = req.params.id;
   const provider_id = req.user.id;
@@ -292,6 +400,23 @@ exports.requestStart = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Customer confirms that the provider has arrived and work has officially started.
+ * 
+ * WHY WE ADDED IT:
+ *   - Stale / No-Show Expiration: Enforces a 1-hour grace window. If more than 1 hour has elapsed
+ *     since the scheduled appointment time without starting, the booking is automatically marked 'expired'.
+ * 
+ * HOW IT WORKS:
+ *   1. Verifies the booking belongs to the logged-in customer and is in 'pending_start' state.
+ *   2. Calculates the difference between current time and scheduled `booking_date`.
+ *   3. If elapsed time > 1 hour, sets status = 'expired' and rejects with an expiration message.
+ *   4. Otherwise, sets status = 'started'.
+ * 
+ * @param {Object} req - Express request (params: id; user: id)
+ * @param {Object} res - Express response
+ */
 exports.confirmStart = (req, res) => {
   const bookingId = req.params.id;
   const user_id = req.user.id;
@@ -348,6 +473,22 @@ exports.confirmStart = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Allows a customer to cancel a booking while it is still in the 'pending' state.
+ * 
+ * WHY WE ADDED IT:
+ *   - Flexibility: Customers can change plans if a provider hasn't confirmed yet.
+ *   - Fairness: Once confirmed, cancellation is restricted to protect provider scheduling.
+ * 
+ * HOW IT WORKS:
+ *   1. Verifies ownership and checks if status is 'pending'.
+ *   2. Updates status to 'cancelled'.
+ *   3. Returns success message.
+ * 
+ * @param {Object} req - Express request (params: id; user: id)
+ * @param {Object} res - Express response
+ */
 exports.cancelBooking = (req, res) => {
   const bookingId = req.params.id;
   const user_id = req.user.id;
@@ -388,6 +529,27 @@ exports.cancelBooking = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Aggregates provider revenue analytics, completed job volume, average ticket size,
+ *   12-month trend breakdowns, top skills by revenue share, and individual transactions.
+ * 
+ * WHY WE ADDED IT:
+ *   - Financial Transparency: Powers the dedicated Provider Earnings & Analytics Dashboard.
+ *   - Flexible Time Filtering: Supports dynamic periods ("week", "month", "last_month", specific year, "all").
+ * 
+ * HOW IT WORKS:
+ *   1. Queries `users.created_at` to determine the provider's joined year for dynamic timeline pills.
+ *   2. Builds SQL clauses to filter completed jobs from `booking_details` view by the selected period.
+ *   3. Computes summary metrics: `totalEarnings`, `completedJobs`, `avgPerJob`.
+ *   4. Generates a 12-month breakdown (Jan-Dec) for the target year.
+ *   5. Calculates top earning skills sorted by revenue and computes percentage shares.
+ *   6. Queries the overall provider star rating across all active services.
+ *   7. Returns full analytics package to the frontend.
+ * 
+ * @param {Object} req - Express request (user: id; query: period, year)
+ * @param {Object} res - Express response
+ */
 exports.getProviderEarnings = (req, res) => {
   const provider_id = req.user.id;
   const { period = "month", year = new Date().getFullYear() } = req.query;

@@ -21,6 +21,21 @@ const isStartWindowExpired = (booking) => {
   return Number.isFinite(bookingTime) && Date.now() - bookingTime > oneHour;
 };
 
+/**
+ * WHAT IT DOES:
+ *   Full booking history and management view for providers. Unlike the home dashboard which isolates
+ *   active jobs, this page lets providers view all bookings (including completed and cancelled),
+ *   filter by time preset or custom date range, and execute lifecycle actions.
+ * 
+ * WHY WE ADDED IT:
+ *   - Comprehensive Record: Lets providers review past customer appointments and fulfillment history.
+ *   - Flexible Schedule Filters: Presets for Today, This Week, This Month, This Year, or Custom Ranges.
+ * 
+ * HOW IT WORKS:
+ *   1. `fetchBookings()` calls `api.get('/bookings/provider', { params: { filter, start_date, end_date } })`.
+ *   2. Displays customer phone and name so providers can coordinate arrival.
+ *   3. Offers action triggers: Confirm, Reject, Request Start, Mark Complete.
+ */
 function ProviderBookings() {
   const [bookings, setBookings] = useState([]);
   const [filter, setFilter] = useState("all");

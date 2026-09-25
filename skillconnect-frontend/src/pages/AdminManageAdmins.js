@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import api from "../Services/api";
 
+/**
+ * WHAT IT DOES:
+ *   Sub-admin management console. Displays registered administrators and provides a secure
+ *   form to onboard new administrators.
+ * 
+ * WHY WE ADDED IT:
+ *   - Administrative Delegation: Enables head administrators to grant platform moderation access
+ *     to team members without manual database intervention.
+ * 
+ * HOW IT WORKS:
+ *   1. `fetchAdmins()` calls `api.get('/auth/admins')`.
+ *   2. `handleSubmit()` posts new admin credentials to `/api/auth/admins`.
+ */
 function AdminManageAdmins() {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);

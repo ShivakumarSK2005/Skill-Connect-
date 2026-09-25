@@ -4,6 +4,23 @@ import api from "../Services/api";
 import { decodeToken, getHomeRoute } from "../Services/auth";
 import logoImg from "../skill-connect-logo.jpg";
 
+/**
+ * WHAT IT DOES:
+ *   Handles customer and service provider authentication. Manages form state, password visibility,
+ *   submits credentials to `/auth/login`, validates role permissions, and redirects to the appropriate dashboard.
+ * 
+ * WHY WE ADDED IT:
+ *   - Primary Authentication Gateway: Serves as the landing screen for returning users.
+ *   - Role-Specific Gatekeeping: Ensures admin users cannot accidentally use the customer/provider login form
+ *     (admins are directed to `/admin-login`).
+ * 
+ * HOW IT WORKS:
+ *   1. Form state tracks `{ email, password }` and dynamic validation state (`isDisabled`).
+ *   2. On submit, sends POST request to `/api/auth/login`.
+ *   3. Decodes JWT using `decodeToken()` to extract user role.
+ *   4. Persists token in `localStorage`.
+ *   5. Calls `navigate(getHomeRoute(user.role))` to redirect to the user's role-specific landing page.
+ */
 function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
@@ -11,11 +28,13 @@ function Login() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  // Disables the submit button if inputs are empty or request is actively loading
   const isDisabled = useMemo(
     () => !form.email.trim() || !form.password.trim() || loading,
     [form.email, form.password, loading]
   );
 
+  // Controlled input change handler
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));

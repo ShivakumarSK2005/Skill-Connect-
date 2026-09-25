@@ -1,3 +1,11 @@
+/**
+ * WHAT IT DOES:
+ *   Defines API routes for services and categories.
+ * 
+ * WHY WE ADDED IT:
+ *   - Allows customers to browse services publicly (`GET /`).
+ *   - Restricts service creation, modification, deletion, and provider queries (`/my`) to authenticated providers.
+ */
 const express = require("express");
 const router = express.Router();
 const { verifyToken } = require("../middleware/authMiddleware");

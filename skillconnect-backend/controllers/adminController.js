@@ -1,5 +1,20 @@
 const db = require("../config/db");
 
+/**
+ * WHAT IT DOES:
+ *   Aggregates high-level platform statistics for the Admin Dashboard overview:
+ *   total customer/provider users, active service listings, and bookings scheduled for today.
+ * 
+ * WHY WE ADDED IT:
+ *   - Executive Oversight: Gives administrators an instant pulse of platform activity upon logging in.
+ * 
+ * HOW IT WORKS:
+ *   1. Executes a consolidated SELECT query containing subqueries for users, services, and today's bookings.
+ *   2. Returns a clean summary object `{ total_users, total_services, bookings_today }`.
+ * 
+ * @param {Object} _req - Express request
+ * @param {Object} res - Express response
+ */
 exports.getDashboardSummary = (_req, res) => {
   const sql = `
     SELECT
@@ -14,6 +29,16 @@ exports.getDashboardSummary = (_req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Fetches all categories in the system sorted newest first.
+ * 
+ * WHY WE ADDED IT:
+ *   - Powers the "Categories" management table in the admin panel.
+ * 
+ * @param {Object} _req - Express request
+ * @param {Object} res - Express response
+ */
 exports.getCategories = (_req, res) => {
   db.query(
     "SELECT id, name FROM categories ORDER BY id DESC",
@@ -24,6 +49,22 @@ exports.getCategories = (_req, res) => {
   );
 };
 
+/**
+ * WHAT IT DOES:
+ *   Creates a new skill category (e.g. "Carpentry", "Appliance Repair").
+ * 
+ * WHY WE ADDED IT:
+ *   - Allows administrators to expand the marketplace with new service niches.
+ *   - Handles duplicates: gracefully catches unique constraint violations (ER_DUP_ENTRY).
+ * 
+ * HOW IT WORKS:
+ *   1. Trims and validates the provided `name`.
+ *   2. Inserts into `categories` table.
+ *   3. Returns HTTP 201 with `category_id`.
+ * 
+ * @param {Object} req - Express request (body: name)
+ * @param {Object} res - Express response
+ */
 exports.createCategory = (req, res) => {
   const { name } = req.body;
 
@@ -51,6 +92,16 @@ exports.createCategory = (req, res) => {
   );
 };
 
+/**
+ * WHAT IT DOES:
+ *   Deletes a category from the database.
+ * 
+ * WHY WE ADDED IT:
+ *   - Allows admins to clean up unused or duplicate categories.
+ * 
+ * @param {Object} req - Express request (params: id)
+ * @param {Object} res - Express response
+ */
 exports.deleteCategory = (req, res) => {
   db.query("DELETE FROM categories WHERE id = ?", [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -63,6 +114,17 @@ exports.deleteCategory = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Fetches all non-admin registered users (customers and providers).
+ * 
+ * WHY WE ADDED IT:
+ *   - Powers the "Users" moderation panel in the admin dashboard.
+ *   - Protects admin security: filters `role IN ('customer', 'provider')` so admins are managed separately.
+ * 
+ * @param {Object} _req - Express request
+ * @param {Object} res - Express response
+ */
 exports.getManagedUsers = (_req, res) => {
   const sql = `
     SELECT id, name, email, phone, role, created_at
@@ -77,6 +139,23 @@ exports.getManagedUsers = (_req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Deletes a customer or provider account from the platform.
+ * 
+ * WHY WE ADDED IT:
+ *   - Moderation: Enables administrators to ban/remove abusive accounts or spammers.
+ *   - Protection: Explicitly checks that the target account is a 'customer' or 'provider' to prevent
+ *     accidental deletion of administrative accounts.
+ * 
+ * HOW IT WORKS:
+ *   1. Queries `users` verifying target ID is a customer or provider.
+ *   2. If found, executes DELETE statement.
+ *   3. Returns success message.
+ * 
+ * @param {Object} req - Express request (params: id)
+ * @param {Object} res - Express response
+ */
 exports.deleteManagedUser = (req, res) => {
   const userId = req.params.id;
   const checkSql = `
@@ -99,6 +178,16 @@ exports.deleteManagedUser = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Retrieves all active services across the platform, including provider contact details.
+ * 
+ * WHY WE ADDED IT:
+ *   - Powers the Admin Services moderation table to monitor published listings across categories.
+ * 
+ * @param {Object} _req - Express request
+ * @param {Object} res - Express response
+ */
 exports.getManagedServices = (_req, res) => {
   const sql = `
     SELECT
@@ -123,6 +212,17 @@ exports.getManagedServices = (_req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Soft-deactivates a service listing by setting `is_active = 0`.
+ * 
+ * WHY WE ADDED IT:
+ *   - Content Moderation: Allows admins to pull down misleading or non-compliant listings
+ *     without breaking historical booking records that reference this service ID.
+ * 
+ * @param {Object} req - Express request (params: id)
+ * @param {Object} res - Express response
+ */
 exports.deactivateService = (req, res) => {
   db.query("UPDATE services SET is_active = 0 WHERE id = ?", [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -135,6 +235,24 @@ exports.deactivateService = (req, res) => {
   });
 };
 
+/**
+ * WHAT IT DOES:
+ *   Fetches all platform bookings with customer and provider details, supporting time filters
+ *   (today, week, month, year, or custom start and end date ranges).
+ * 
+ * WHY WE ADDED IT:
+ *   - Marketplace Operations: Allows admins to monitor all appointments, resolve disputes,
+ *     and track fulfillment across the platform.
+ *   - Database View Integration: Reads from the `booking_details` view, delivering clean, unified data.
+ * 
+ * HOW IT WORKS:
+ *   1. Extracts filter query parameters (`filter`, `start_date`, `end_date`).
+ *   2. Dynamically generates SQL WHERE conditions.
+ *   3. Queries `booking_details` view and sorts by booking date descending.
+ * 
+ * @param {Object} req - Express request (query: filter, start_date, end_date)
+ * @param {Object} res - Express response
+ */
 exports.getAdminBookings = (req, res) => {
   const { filter = "all", start_date, end_date } = req.query;
   const conditions = [];

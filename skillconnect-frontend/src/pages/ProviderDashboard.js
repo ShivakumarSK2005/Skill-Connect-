@@ -18,6 +18,23 @@ const isStartWindowExpired = (booking) => {
   return Number.isFinite(bookingTime) && Date.now() - bookingTime > oneHour;
 };
 
+/**
+ * WHAT IT DOES:
+ *   Main command center for service providers. Displays high-level workload stats (pending requests,
+ *   active jobs), an active booking queue, customer contact cards, and one-click action buttons
+ *   to accept/reject, request start, and mark jobs completed.
+ * 
+ * WHY WE ADDED IT:
+ *   - Operational Focus: Filters out historical completed/cancelled jobs to keep provider attention
+ *     focused on upcoming and active commitments.
+ *   - Streamlined Workflow: Quick action triggers eliminate unnecessary page hopping.
+ * 
+ * HOW IT WORKS:
+ *   1. Queries `api.get('/bookings/provider')` on load.
+ *   2. Filters out completed/cancelled items to isolate active commitments (`activeStatuses`).
+ *   3. Computes summary metrics: Total active, Pending requests, In Progress jobs.
+ *   4. Provides status transition triggers (`handleStatusUpdate`, `handleRequestStart`, `handleComplete`).
+ */
 function ProviderDashboard() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);

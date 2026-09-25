@@ -3,6 +3,20 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import api from "../Services/api";
 
+/**
+ * WHAT IT DOES:
+ *   Central command hub for platform administrators. Displays aggregate metrics (Total Users,
+ *   Active Services, Bookings Today) and quick-navigation tiles to management modules
+ *   (Categories, Users, Services, Bookings, Admins).
+ * 
+ * WHY WE ADDED IT:
+ *   - Executive Overview: Provides instant health metrics on the marketplace's adoption and usage.
+ * 
+ * HOW IT WORKS:
+ *   1. Calls `api.get('/admin/summary')` on load.
+ *   2. Displays KPI metric cards in the hero panel.
+ *   3. Renders interactive navigation cards leading to moderation tools.
+ */
 function AdminDashboard() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState({

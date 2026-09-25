@@ -4,6 +4,22 @@ import api from "../Services/api";
 import { decodeToken, getCurrentUser, getHomeRoute } from "../Services/auth";
 import logoImg from "../skill-connect-logo.jpg";
 
+/**
+ * WHAT IT DOES:
+ *   Specialized administrative login portal. Authenticates platform operators and verifies that
+ *   the authenticated user's role is strictly 'admin' before granting access to admin tools.
+ * 
+ * WHY WE ADDED IT:
+ *   - Security Separation: Keeps regular user login separate from administrative control access.
+ *   - Role Rejection: If a customer or provider enters credentials here, they are blocked with an
+ *     explicit notice ("This account is not an admin account.") preventing improper session elevation.
+ * 
+ * HOW IT WORKS:
+ *   1. Checks if an admin session is already active; if so, redirects to `/admin-dashboard`.
+ *   2. On submit, sends credentials to `/api/auth/login`.
+ *   3. Decodes the token; checks `user.role === 'admin'`.
+ *   4. Stores token in `localStorage` and redirects to `/admin-dashboard`.
+ */
 function AdminLogin() {
   const navigate = useNavigate();
   const currentUser = getCurrentUser();

@@ -2,6 +2,18 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import api from "../Services/api";
 
+/**
+ * WHAT IT DOES:
+ *   Admin service moderation dashboard. Allows platform operators to inspect all listed services
+ *   and safely deactivate (hide) inappropriate listings without breaking historical bookings.
+ * 
+ * WHY WE ADDED IT:
+ *   - Quality Control: Allows administrators to remove misleading or offensive service descriptions.
+ * 
+ * HOW IT WORKS:
+ *   1. `fetchData()` queries `api.get('/admin/services')`.
+ *   2. `handleDelete(serviceId)` sends DELETE request to `/admin/services/:id` (which soft-deactivates via `is_active = 0`).
+ */
 function AdminServices() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -17,6 +17,12 @@ import ProviderServices from "./pages/ProviderServices";
 import ProviderEarnings from "./pages/ProviderEarnings";
 import Profile from "./pages/Profile";
 
+/**
+ * WHAT IT DOES:
+ *   Smart root redirector. If a user is already logged in, automatically redirects them to
+ *   their respective dashboard (customer -> /services, provider -> /provider-dashboard, admin -> /admin-dashboard).
+ *   If not logged in, presents the public Login view.
+ */
 function HomeRedirect() {
   const user = getCurrentUser();
 
@@ -27,6 +33,15 @@ function HomeRedirect() {
   return <Navigate to={getHomeRoute(user.role)} replace />;
 }
 
+/**
+ * WHAT IT DOES:
+ *   Main React Application root component. Sets up React Router client-side routing,
+ *   declares public routes (`/`, `/signup`, `/admin-login`), and configures role-protected
+ *   routes wrapped with `<ProtectedRoute>`.
+ * 
+ * WHY WE ADDED IT:
+ *   - Architecture backbone: Enforces Single Page Application (SPA) navigation and RBAC protection.
+ */
 function App() {
   return (
     <BrowserRouter>

@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import api from "../Services/api";
 
+/**
+ * WHAT IT DOES:
+ *   Admin category management dashboard. Allows administrators to create new marketplace categories
+ *   (e.g., "Plumbing", "Carpentry", "Electrical") and delete obsolete categories.
+ * 
+ * WHY WE ADDED IT:
+ *   - Marketplace Taxonomy: Establishes the category structure that organizes all service offerings.
+ * 
+ * HOW IT WORKS:
+ *   1. `fetchCategories()` calls `api.get('/admin/categories')`.
+ *   2. `handleSubmit(e)` validates input and calls `api.post('/admin/categories', { name })`.
+ *   3. `handleDelete(categoryId)` calls `api.delete('/admin/categories/:id')`.
+ */
 function AdminCategories() {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState("");

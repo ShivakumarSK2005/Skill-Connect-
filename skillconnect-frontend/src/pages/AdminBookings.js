@@ -7,6 +7,20 @@ const initialRange = {
   end_date: ""
 };
 
+/**
+ * WHAT IT DOES:
+ *   Platform-wide booking surveillance dashboard for administrators.
+ *   Displays all customer appointments across all service providers with preset time filters
+ *   (Today, This Week, This Month, This Year) or custom date ranges.
+ * 
+ * WHY WE ADDED IT:
+ *   - Operational Transparency: Enables staff to monitor fulfillment rates, troubleshoot customer issues,
+ *     and inspect appointments.
+ * 
+ * HOW IT WORKS:
+ *   1. `fetchBookings()` calls `api.get('/admin/bookings', { params: { filter, start_date, end_date } })`.
+ *   2. Displays customer name, phone, provider name, phone, service, category, and current status.
+ */
 function AdminBookings() {
   const [bookings, setBookings] = useState([]);
   const [filter, setFilter] = useState("all");

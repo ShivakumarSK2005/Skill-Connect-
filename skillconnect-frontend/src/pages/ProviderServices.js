@@ -11,6 +11,23 @@ const initialServiceForm = {
   price: ""
 };
 
+/**
+ * WHAT IT DOES:
+ *   Comprehensive service management screen for providers. Allows creating new service offerings,
+ *   editing existing listings (updating prices, category, description), viewing customer ratings,
+ *   and deleting discontinued services.
+ * 
+ * WHY WE ADDED IT:
+ *   - Service Catalog Control: Gives providers full autonomy over their pricing and skill listings.
+ *   - In-place Editing: Clicking "Edit" smoothly scrolls up and populates the form with existing values.
+ * 
+ * HOW IT WORKS:
+ *   1. Fetches `/services/my` and `/services/categories` simultaneously using `Promise.all()`.
+ *   2. `handleSubmit()` detects whether `editingServiceId` is set:
+ *      - If set -> calls `api.put('/services/:id')`
+ *      - If null -> calls `api.post('/services')`
+ *   3. `handleDeleteService(id)` confirms with user and calls `api.delete('/services/:id')`.
+ */
 function ProviderServices() {
   const formSectionRef = useRef(null);
   const [services, setServices] = useState([]);
