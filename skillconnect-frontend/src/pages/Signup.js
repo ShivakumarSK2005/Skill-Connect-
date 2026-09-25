@@ -7,6 +7,7 @@ const initialForm = {
   name: "",
   email: "",
   password: "",
+  confirmPassword: "",
   phone: "",
   role: "customer"
 };
@@ -33,6 +34,7 @@ function Signup() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const isDisabled = useMemo(() => {
     return (
@@ -40,6 +42,7 @@ function Signup() {
       !form.name.trim() ||
       !form.email.trim() ||
       !form.password.trim() ||
+      !form.confirmPassword.trim() ||
       !form.phone.trim() ||
       !form.role
     );
@@ -53,8 +56,25 @@ function Signup() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (form.password.trim().length < 6) {
+    const emailPattern = /^[A-Za-z0-9._%+-]+@gmail\.com$/;
+    if (!emailPattern.test(form.email.trim())) {
+      setError("Please enter a valid Gmail address ending with @gmail.com");
+      return;
+    }
+
+    if (form.password.length < 6) {
       setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match. Please verify both passwords.");
+      return;
+    }
+
+    const phonePattern = /^[6-9][0-9]{9}$/;
+    if (!phonePattern.test(form.phone.trim())) {
+      setError("Phone number must be a 10-digit number starting with 6, 7, 8, or 9.");
       return;
     }
 
@@ -62,13 +82,27 @@ function Signup() {
       setLoading(true);
       setError("");
       setSuccess("");
-      await api.post("/auth/signup", form);
+
+      const payload = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        phone: form.phone.trim(),
+        role: form.role
+      };
+
+      await api.post("/auth/signup", payload);
       setSuccess("Signup successful. Redirecting to login...");
       setTimeout(() => navigate("/"), 900);
     } catch (err) {
-      setError(
-        err.response?.data?.message || err.response?.data?.error || "Signup failed."
-      );
+      const serverMessage = err.response?.data?.message || err.response?.data?.error;
+      if (serverMessage) {
+        setError(serverMessage);
+      } else if (err.message === "Network Error") {
+        setError("Unable to connect to the backend server. Please verify your Render service is running.");
+      } else {
+        setError(err.message || "Signup failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -109,7 +143,7 @@ function Signup() {
               type="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="you@example.com"
+              placeholder="you@gmail.com"
             />
           </label>
 
@@ -129,6 +163,26 @@ function Signup() {
                 onClick={() => setShowPassword((current) => !current)}
               >
                 {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+          </label>
+
+          <label>
+            <span>Confirm Password</span>
+            <div className="password-field">
+              <input
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={form.confirmPassword}
+                onChange={handleChange}
+                placeholder="Re-enter your password"
+              />
+              <button
+                className="password-toggle"
+                type="button"
+                onClick={() => setShowConfirmPassword((current) => !current)}
+              >
+                {showConfirmPassword ? "Hide" : "Show"}
               </button>
             </div>
           </label>

@@ -28,8 +28,28 @@ exports.signup = async (req, res) => {
   try {
     const { name, email, password, role, phone } = req.body;
 
+    if (!name || !email || !password || !phone || !role) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
     if (role === "admin") {
       return res.status(403).json({ message: "Admin cannot register" });
+    }
+
+    // Validate standard @gmail.com pattern
+    const emailRegex = /^[A-Za-z0-9._%+-]+@gmail\.com$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Please enter a valid Gmail address ending with @gmail.com" });
+    }
+
+    // Validate 10-digit phone number starting with 6-9
+    const phoneRegex = /^[6-9][0-9]{9}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ message: "Phone must be a valid 10-digit number starting with 6, 7, 8, or 9" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -41,16 +61,20 @@ exports.signup = async (req, res) => {
     db.query(sql, [name, email, hashedPassword, role, phone], (err) => {
       if (err) {
         if (err.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ message: "Email already exists" });
+          const errMsg = err.message || "";
+          if (errMsg.toLowerCase().includes("phone")) {
+            return res.status(400).json({ message: "This phone number is already registered" });
+          }
+          return res.status(400).json({ message: "This email is already registered" });
         }
 
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({ message: err.message || "Database registration error" });
       }
 
       res.status(201).json({ message: "User registered successfully" });
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: error.message || "Server error occurred" });
   }
 };
 
