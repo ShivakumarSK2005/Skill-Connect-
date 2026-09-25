@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../Services/api";
+import { getHomeRoute } from "../Services/auth";
 import logoImg from "../skill-connect-logo.jpg";
 
 const initialForm = {
@@ -91,9 +92,18 @@ function Signup() {
         role: form.role
       };
 
-      await api.post("/auth/signup", payload);
-      setSuccess("Signup successful. Redirecting to login...");
-      setTimeout(() => navigate("/"), 900);
+      const res = await api.post("/auth/signup", payload);
+
+      if (res.data?.token) {
+        localStorage.setItem("token", res.data.token);
+        setSuccess("Account created successfully! Logging you in...");
+        setTimeout(() => {
+          navigate(getHomeRoute(payload.role), { replace: true });
+        }, 600);
+      } else {
+        setSuccess("Signup successful. Redirecting to login...");
+        setTimeout(() => navigate("/"), 900);
+      }
     } catch (err) {
       const serverMessage = err.response?.data?.message || err.response?.data?.error;
       if (serverMessage) {

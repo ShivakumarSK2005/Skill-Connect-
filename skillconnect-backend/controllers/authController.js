@@ -58,7 +58,7 @@ exports.signup = async (req, res) => {
       VALUES (?, ?, ?, ?, ?)
     `;
 
-    db.query(sql, [name, email, hashedPassword, role, phone], (err) => {
+    db.query(sql, [name, email, hashedPassword, role, phone], (err, result) => {
       if (err) {
         if (err.code === "ER_DUP_ENTRY") {
           const errMsg = err.message || "";
@@ -71,7 +71,18 @@ exports.signup = async (req, res) => {
         return res.status(500).json({ message: err.message || "Database registration error" });
       }
 
-      res.status(201).json({ message: "User registered successfully" });
+      // Generate JWT immediately so user is automatically logged in upon signup
+      const token = jwt.sign(
+        { id: result.insertId, role: role },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
+      );
+
+      res.status(201).json({
+        message: "User registered successfully",
+        token,
+        user: { id: result.insertId, name, email, role, phone }
+      });
     });
   } catch (error) {
     res.status(500).json({ message: error.message || "Server error occurred" });
